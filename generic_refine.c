@@ -3,10 +3,17 @@
 
 int decode_refine_prediction(int ltp, int template)
 {
+  return 0;
 }
 
 word get_refine_context(bitmap_t* region, bitmap_t* ref, int x, int y, point_t* offset, int template, point_t* ap) 
 {
+  return 0;
+}
+
+int equal_pixels(bitmap_t* ref, int x, int y, int template) 
+{
+	return 0;
 }
 
 /** 
@@ -43,34 +50,26 @@ bitmap_t *generic_refine_decode(
 				int prediction, 
 				point_t adaptive_pixels[])
 {
-	uint ltp = 0;
+        uint ltp = 0;
 	bitmap_t* b = new_bitmap(w, h);
-	for (uint i = 0; i < h; i++) 
+	byte* p = b->data;
+
+	int num_bits_values[2] = { 13, 10 };
+	for (int i = 0; i < h; i++)
 	{
-		if (prediction) 
-		{
-		  ltp = decode_refine_prediction(ltp, template); //декодируется бит предсказания
-			if (ltp == 0)
+		if (prediction) //предсказание включено
+			ltp = decode_refine_prediction(ltp, template); //декодируется бит предсказания
+						
+		//декодируются все точки ряда
+		for (int j = 0; j < w; j++)
+			if(ltp && prediction && equal_pixels(ref, j, i, template))
 			{
-			  //декодируются все точки ряда
-				for (int j = 0; j < w; j++) 
-				{
-					get_refine_context(b, ref, j, i, offset, template, ap);
-
-				}
-				//декодируем точку arith_decode
+				*p++ = get_pixel(ref, j + offset->x, i + offset->y);
 			}
-			if (ltp) 
-			{	//для каждой точки из строки
-				for (uint j = 0; j < w; j++) 
-				{
-					if (prediction) 
-					{
-
-					}
-				}
+			else 
+			{
+				word context = get_refine_context(b, ref, j, i, offset, template, adaptive_pixels);
+				*p++ = arith_decode(context, PROC_GR, num_bits_values[template]);
 			}
-		}
 	}
-
 }
