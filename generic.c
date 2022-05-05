@@ -9,6 +9,12 @@
 
 #include"generic.h"
 
+int ltp; // текущая строчка кодируется напрямую
+
+int decode_prediction(int ltp, int template)
+{
+  return 0;   
+}
 
 /** Алгоритм (mmr = 0):
 * 1. Создать битовую карту (new_bitmap)
@@ -40,12 +46,20 @@ bitmap_t *generic_decode(
 			 bitmap_t *skip,
 			 point_t adaptive_pixels[])
 {
-  bitmap_t* b = new_bitmap(w, h);
-  for (uint i = 0; i < h; i++) 
+    bitmap_t* b = new_bitmap(w, h);
+    ltp = 0;
+    byte *p = b->data;
+    for (uint i = 0; i < h; i++) 
     {
-      if (prediction == 1) 
-	{
-	  ltp = decode_prediction(,); //декодируется бит предсказания
-	}
+        if (prediction) 
+	        ltp = decode_prediction(ltp, template); //декодируется бит предсказания
+
+	       for (unit j = 0; j < w; j++;)
+	       {
+	           if (ltp == 1)
+	           {
+	              *p++ = get_pixel(b, j, i-1);
+	           }        
+	       }
     }
 }
