@@ -14,3 +14,4 @@ typedef struct {
 } bitmap_t;
 
 bitmap_t *new_bitmap(int w, int h); // создать новую карту
+int get_pixel(bitmap_t *bm, int x, int y); // прочитать точку (точки за пределами карты равны 0)
