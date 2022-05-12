@@ -56,6 +56,12 @@ bitmap_t *sym_dict_decode_symbol(int refine_agg, int width, int height, int temp
     
 }
 
+void export_symbols(bitmap_t *input, int num_input, bitmap_t *output, int num_output)
+{
+    for (int i = 0; i < num_output; i++)
+        output[i] = input[i];
+}
+
 /** 
  * Декодирование словаря символов
  * 
@@ -70,7 +76,7 @@ bitmap_t *sym_dict_decode_symbol(int refine_agg, int width, int height, int temp
  *    3.2.1 Декодирование delta_width (sym_dict_decode_val)
  *    cur_width += delta_width;
  *    cur_class_width += cur_width;
- *    3.2.2 если huff = 0 и refine_agg = 1 то декодируем битовую карту символа (sym_dict_decode_symbol)
+ *    3.2.2 если huff = 0 или refine_agg = 1 то декодируем битовую карту символа (sym_dict_decode_symbol)
  *    3.2.3 если huff = 1 и refine_agg = 0 то запоминаем текущую ширину символа в массиве символов (по текущему индексу)
  *    3.3 если huff = 1 и refine_agg = 0 то декодируем коллективную битовую карту класса (размеры cur_class_width, class_height) decode_collective_bitmap
  *    3.3.1 разбить коллективную карту на символы, используя запомненные ширины символов и записать в массив новых символов (bitmap_crop) (нужно посчитать число символов в классе высот)
@@ -112,27 +118,42 @@ bitmap_t *sym_dict_decode(
     bitmap_t *output_dict = malloc(sizeof(bitmap_t) * num_export_syms);
     class_height = 0;
     bitmap_t *new_syms_dict = malloc(sizeof(bitmap_t) * num_new_syms);
+    int *syms_widths = malloc(sizeof(int) * num_new_syms);
     
-    int syms_widths[num_new_syms];
-    
-    for (int i = 0; i < num_new_syms; i++) 
-    {
+    for (int i = 0; i < num_new_syms; i++) {
         height_delta = sym_dict_decode_val(huff, height_table);
         class_height += height_delta;
         cur_class_width = 0;
         cur_width = cur_class_width;
-        while (1) 
-        {            
+        int num_class_syms = 0;
+        
+        while (1) {            
             width_delta = sym_dict_decode_val(huff, width_table);
             if (oob == 1)
-                break;
+                break;                
             cur_width += width_delta;
-            cur_class_width += cur_width;            
-            if (huff == 1 && refine_agg == 0)
-                new_syms_dict[i] = sym_dict_decode_symbol(0, cur_width, class_height, refine_template, sym_adaptive_pixels);                
-            if (huff == 0 && refine_agg == 1)
+            cur_class_width += cur_width;     
+            num_class_syms++;
+            
+            if (huff == 0 || refine_agg == 1)
+                new_syms_dict[i] = sym_dict_decode_symbol(refine_agg, cur_width, class_height, refine_template, sym_adaptive_pixels);                
+            else if (huff == 1 && refine_agg == 0)
                 syms_widths[i] = cur_width;
-        }                
-    }    
+	    i++;
+        }   
+        if (huff == 1 && refine_agg == 0) {
+            class_bitmap = decode_collective_bitmap(cur_class_width, class_height);
+            int start_col = 0;
+            for (int j = 0; j < num_class_syms; j++) {
+                current_symbol = &new_syms_dict[i - num_class_syms + j];
+                current_symbol->data = malloc(class_height * syms_widths[j]);
+                bitmap_crop(class_bitmap, current_symbol, start_col, syms_widths[j]);
+                start_col += syms_widths[j];
+            }
+        }
+    }
+    export_symbols(new_syms_dict, num_new_syms, output_dict, num_export_syms);
+    free(sym_widths);
+    free(new_syms_dict);
     return output_dict;
 }
