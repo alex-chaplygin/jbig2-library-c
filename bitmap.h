@@ -15,3 +15,4 @@ typedef struct {
 
 bitmap_t *new_bitmap(int w, int h); // создать новую карту
 int get_pixel(bitmap_t *bm, int x, int y); // прочитать точку (точки за пределами карты равны 0)
+void bitmap_crop(bitmap_t *src, bitmap_t *dst, int start_col, int width); // вырезать часть карты
