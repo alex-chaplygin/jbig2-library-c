@@ -46,3 +46,22 @@ int get_bit()
     }    
     return res_bit;
 }
+
+/** 
+ * Чтение последовательности бит из потока
+ * 
+ * @param num число бит, сколько необходимо прочитать
+ * 
+ * @return последовательность бит
+ */
+int get_bits(int num)
+{
+    int sub_bits = 0;
+    int cur_sub_bite = 0;
+    
+    for(int i = 0; i < num; i++){
+        cur_sub_bite = get_bit();
+        sub_bits = sub_bits + (cur_sub_bite << 1);
+    }
+    return sub_bits;  
+}
