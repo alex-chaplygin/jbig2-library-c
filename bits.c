@@ -57,11 +57,11 @@ int get_bit()
 int get_bits(int num)
 {
     int sub_bits = 0;
-    int cur_sub_bite = 0;
+    int cur_sub_bit = 0;
     
-    for(int i = 0; i < num; i++){
-        cur_sub_bite = get_bit();
-        sub_bits = sub_bits + (cur_sub_bite << 1);
+    for (int i = num - 1; i >= 0 ; i--){
+        cur_sub_bit = get_bit();
+        sub_bits = sub_bits + (cur_sub_bit << i);
     }
     return sub_bits;  
 }
