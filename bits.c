@@ -65,3 +65,27 @@ int get_bits(int num)
     }
     return sub_bits;  
 }
+
+/** 
+ * Перемещает указатель бит на следующий байт,
+ * если указатель не находится на границе байтов
+ */
+void next_byte()
+{
+    if( bit_count != 8){
+        cur_byte++;
+        bit_count = 8;
+    }
+}
+
+/** 
+ * Меняет порядок байт в слове
+ * 
+ * @param val слово
+ * 
+ * @return слово с переставленными байтами
+ */
+word swap_word(word val)
+{
+  return (val >> 8) + ((val & 0xff) << 8);
+}

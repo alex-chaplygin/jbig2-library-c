@@ -34,9 +34,29 @@ void test_get_bits()
     ASSERT(get_bits(1), -1); 
 }
 
+void test_next_byte()
+{
+    set_bit_stream(byte_stream, sizeof(byte_stream));
+    get_bits(8);
+    next_byte();
+    int bits = get_bits(4);
+    ASSERT(bits, 0)
+    next_byte();
+    bits = get_bits(4);
+    ASSERT(bits, 0xC);
+}
+
+void test_swap_word()
+{
+    word w = swap_word(0xaabb);
+    ASSERT(w, 0xbbaa);
+}
+
 int main()
 {
     test_get_bit();
     test_get_bits();
+    test_next_byte();
+    test_swap_word();
     return 0;
 }
