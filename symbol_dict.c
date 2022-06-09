@@ -23,6 +23,7 @@
  * OOB
  * Коллективная битовая карта (если huff = 1 и refine_agg = 0)
  */
+#include <stdlib.h>
 
 #include "symbol_dict.h"
 
@@ -37,6 +38,7 @@ bitmap_t *class_bitmap; /**< общая битовая карта символо
 byte *export_flags; /**< массив флагов словаря (число символов - исходные + новые) по 1 биту */
 uint run_length; /**< длина серии одинаковых флагов */
 int oob; /**< если 1, то конец данных */
+int class_counter;
 
 /** 
  * Декодирует значение
@@ -46,14 +48,35 @@ int oob; /**< если 1, то конец данных */
  * 
  * @return декодированное значение
  */
-int sym_dict_decode_val(int huff, byte *huff_table)
+int sym_dict_decode_val(int huff, int *huff_table)
 {
-    return 1;
+    int values_array[] = { 10, 2, 4, 5, 3, 7, 2 };
+    
+    if (class_counter == 4 && oob == 1)
+        oob = 0;
+    else if (class_counter == 4 || class_counter >= sizeof(values_array) / sizeof(int)) 
+    {
+        oob = 1;
+        return 0;
+    }
+        
+    return values_array[class_counter++];
 }
 
-bitmap_t *sym_dict_decode_symbol(int refine_agg, int width, int height, int template, point_t *adaptive_points);
+bitmap_t decoded_symbol;
+bitmap_t *sym_dict_decode_symbol(int refine_agg, int width, int height, int template, point_t *adaptive_points)
 {
-    
+    decoded_symbol.width = width;
+    decoded_symbol.height = height;
+    return &decoded_symbol;
+}
+
+bitmap_t col_bitmap;
+bitmap_t *decode_collective_bitmap(int cur_class_width, int class_height) 
+{
+    col_bitmap.width = cur_class_width;
+    col_bitmap.height = class_height;
+    return &col_bitmap;
 }
 
 void export_symbols(bitmap_t *input, int num_input, bitmap_t *output, int num_output)
@@ -115,45 +138,49 @@ bitmap_t *sym_dict_decode(
 			  int refine_template, 
 			  point_t refine_adaptive_pixels[])
 {
-    bitmap_t *output_dict = malloc(sizeof(bitmap_t) * num_export_syms);
+bitmap_t *output_dict = malloc(sizeof(bitmap_t) * num_export_syms);
     class_height = 0;
     bitmap_t *new_syms_dict = malloc(sizeof(bitmap_t) * num_new_syms);
     int *syms_widths = malloc(sizeof(int) * num_new_syms);
     
-    for (int i = 0; i < num_new_syms; i++) {
+    for (int i = 0; i < num_new_syms; ) 
+    {
         height_delta = sym_dict_decode_val(huff, height_table);
         class_height += height_delta;
         cur_class_width = 0;
         cur_width = cur_class_width;
         int num_class_syms = 0;
         
-        while (1) {            
+        while (1) 
+        {
             width_delta = sym_dict_decode_val(huff, width_table);
             if (oob == 1)
-                break;                
+                break;
             cur_width += width_delta;
             cur_class_width += cur_width;     
             num_class_syms++;
             
             if (huff == 0 || refine_agg == 1)
-                new_syms_dict[i] = sym_dict_decode_symbol(refine_agg, cur_width, class_height, refine_template, sym_adaptive_pixels);                
+                new_syms_dict[i] = *sym_dict_decode_symbol(refine_agg, cur_width, class_height, refine_template, sym_adaptive_pixels);                
             else if (huff == 1 && refine_agg == 0)
                 syms_widths[i] = cur_width;
-	    i++;
+	        i++;
         }   
-        if (huff == 1 && refine_agg == 0) {
+        if (huff == 1 && refine_agg == 0) 
+        {
             class_bitmap = decode_collective_bitmap(cur_class_width, class_height);
             int start_col = 0;
-            for (int j = 0; j < num_class_syms; j++) {
+            for (int j = 0; j < num_class_syms; j++) 
+            {
                 current_symbol = &new_syms_dict[i - num_class_syms + j];
                 current_symbol->data = malloc(class_height * syms_widths[j]);
-                bitmap_crop(class_bitmap, current_symbol, start_col, syms_widths[j]);
+                bitmap_crop(class_bitmap, current_symbol, start_col, syms_widths[i - num_class_syms + j]);
                 start_col += syms_widths[j];
             }
         }
     }
     export_symbols(new_syms_dict, num_new_syms, output_dict, num_export_syms);
-    free(sym_widths);
+    free(syms_widths);
     free(new_syms_dict);
     return output_dict;
 }

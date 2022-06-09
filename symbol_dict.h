@@ -15,5 +15,5 @@ bitmap_t *sym_dict_decode( // возвращает массив символов
 			  int sym_template, // шаблон битовых карт символов
 			  point_t sym_adaptive_pixels[], // массив адаптивных шаблонных точек размером 4 для символов
 			  int refine_template, // шаблон битовых карт улучшения
-			  point_t refine_adaptive_pixels[], // массив адаптивных шаблонных точек размером 2 для улучшения
+			  point_t refine_adaptive_pixels[] // массив адаптивных шаблонных точек размером 2 для улучшения
 );
