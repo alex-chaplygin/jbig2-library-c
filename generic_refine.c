@@ -1,9 +1,14 @@
 #include "generic_refine.h"
 #include "arith.h"
 
+int num_bits_values[2] = { 13, 10 };
+
 int decode_refine_prediction(int ltp, int template)
 {
-  return 0;
+  int context;
+  if (template) context = 8; else context = 16;
+  ltp = ltp ^ arith_decode(context, PROC_GR, num_bits_values[template]);
+  return ltp;
 }
 
 word get_refine_context(bitmap_t* region, bitmap_t* ref, int x, int y, point_t* offset, int template, point_t* ap) 
@@ -13,7 +18,7 @@ word get_refine_context(bitmap_t* region, bitmap_t* ref, int x, int y, point_t* 
 
 int equal_pixels(bitmap_t* ref, int x, int y, int template) 
 {
-	return 0;
+	return 1;
 }
 
 /** 
@@ -54,7 +59,6 @@ bitmap_t *generic_refine_decode(
 	bitmap_t* b = new_bitmap(w, h);
 	byte* p = b->data;
 
-	int num_bits_values[2] = { 13, 10 };
 	for (int i = 0; i < h; i++)
 	{
 		if (prediction) //предсказание включено
@@ -72,4 +76,5 @@ bitmap_t *generic_refine_decode(
 				*p++ = arith_decode(context, PROC_GR, num_bits_values[template]);
 			}
 	}
+	return ref;
 }
